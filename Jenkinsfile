@@ -6,7 +6,7 @@ pipeline {
         AWS_ACCOUNT_ID = '822424645857'
         ECR_REPOSITORY = 'tc02-hello-world'
         EKS_CLUSTER = 'tc02-eks-cluster'
-        IMAGE_URI = "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY"
+        IMAGE_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
     }
 
     stages {
@@ -32,7 +32,7 @@ pipeline {
                     aws ecr get-login-password --region $AWS_REGION | \
                     docker login \
                       --username AWS \
-                      --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                      --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                 '''
             }
         }
@@ -89,4 +89,4 @@ pipeline {
             }
         }
     }
-} 
+}
