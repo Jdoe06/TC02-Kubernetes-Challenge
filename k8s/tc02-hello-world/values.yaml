@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: 822424645857.dkr.ecr.us-east-1.amazonaws.com/tc02-hello-world
-  tag: "7"
+  tag: "8"
   pullPolicy: Always
 
 containerPort: 5001
