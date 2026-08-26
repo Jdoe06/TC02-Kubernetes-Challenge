@@ -5,7 +5,6 @@ pipeline {
         AWS_REGION = 'us-east-1'
         AWS_ACCOUNT_ID = '822424645857'
         ECR_REPOSITORY = 'tc02-hello-world'
-        EKS_CLUSTER = 'tc02-eks-cluster'
         IMAGE_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
     }
 
@@ -55,37 +54,32 @@ pipeline {
             }
         }
 
-        stage('Connect to EKS') {
+        stage('Update GitOps Image Tag') {
             steps {
-                sh '''
-                    aws eks update-kubeconfig \
-                      --region $AWS_REGION \
-                      --name $EKS_CLUSTER
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'github-token',
+                        usernameVariable: 'GITHUB_USER',
+                        passwordVariable: 'GITHUB_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        sed -i "s/tag: .*/tag: \\"$BUILD_NUMBER\\"/" \
+                          k8s/tc02-hello-world/values.yaml
 
-                    kubectl get nodes
-                '''
-            }
-        }
+                        git config user.name "Jenkins"
+                        git config user.email "jenkins@tc02.local"
 
-        stage('Deploy with Helm') {
-            steps {
-                sh '''
-                    helm upgrade --install tc02-hello-world ./k8s/tc02-hello-world \
-                      --set image.repository=$IMAGE_URI \
-                      --set image.tag=$BUILD_NUMBER
-                '''
-            }
-        }
+                        git add k8s/tc02-hello-world/values.yaml
 
-        stage('Verify Deployment') {
-            steps {
-                sh '''
-                    kubectl rollout status deployment/tc02-hello-world
-                    kubectl get pods
-                    kubectl get svc
-                    kubectl get ingress
-                    kubectl get hpa
-                '''
+                        git commit \
+                          -m "Update application image to build $BUILD_NUMBER"
+
+                        git push \
+                          https://$GITHUB_USER:$GITHUB_TOKEN@github.com/Jdoe06/TC02-Kubernetes-Challenge.git \
+                          HEAD:main
+                    '''
+                }
             }
         }
     }
